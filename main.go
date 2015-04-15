@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/ChimeraCoder/anaconda"
@@ -14,12 +15,20 @@ var (
 	consumerSecret    = flag.String("cs", "", "Consumer secret")
 	accessToken       = flag.String("at", "", "Access token")
 	accessTokenSecret = flag.String("as", "", "Access token secret")
+	addr              = flag.String("addr", ":7179", "The addr the listen on")
 )
+
+type tweet struct {
+	ScreenName string `json:"screen_name"`
+	Text       string `json:"text"`
+	CreatedAt  string `json:"created_at"`
+}
 
 func main() {
 	flag.Parse()
 	http.Handle("/GetUserTimeline", newServer())
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Println("Starting server on " + *addr)
+	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
 type server struct {
@@ -57,7 +66,20 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, tweet := range tweets {
-		fmt.Fprintf(w, "\n\n<div>%s</div>", tweet.Text)
+	tweetList := make([]tweet, 0)
+
+	for _, t := range tweets {
+		tweetList = append(tweetList, tweet{t.User.ScreenName, t.Text, t.CreatedAt})
 	}
+
+	out, err := json.Marshal(tweetList)
+	if err != nil {
+		log.Print(err)
+		http.Error(w, "JSON marshal failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	fmt.Fprint(w, string(out))
 }
