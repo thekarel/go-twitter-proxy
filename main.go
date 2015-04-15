@@ -14,12 +14,14 @@ var (
 	consumerSecret    = flag.String("cs", "", "Consumer secret")
 	accessToken       = flag.String("at", "", "Access token")
 	accessTokenSecret = flag.String("as", "", "Access token secret")
+	addr              = flag.String("addr", ":7179", "The addr the listen on")
 )
 
 func main() {
 	flag.Parse()
 	http.Handle("/GetUserTimeline", newServer())
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Println("Starting server on " + *addr)
+	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
 type server struct {
