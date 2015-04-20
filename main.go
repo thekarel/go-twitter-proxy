@@ -58,15 +58,15 @@ func newServer() *server {
 // ServeHTTP handles incoming queries.
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
-	screen_name := query.Get("screen_name")
+	screenName := query.Get("screen_name")
 
-	if screen_name == "" {
+	if screenName == "" {
 		http.Error(w, "screen_name not set, use /GetUserTimeline?screen_name=...", http.StatusBadRequest)
 		return
 	}
 
 	v := url.Values{}
-	v.Set("screen_name", screen_name)
+	v.Set("screen_name", screenName)
 
 	tweets, err := s.api.GetUserTimeline(v)
 	if err != nil {
