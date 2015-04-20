@@ -1,3 +1,4 @@
+// An example Twitter API 1.1 proxy
 package main
 
 import (
@@ -11,12 +12,16 @@ import (
 	"github.com/ChimeraCoder/anaconda"
 )
 
+// tweet is the struct for building JSON output for GetUserTimeline
 type tweet struct {
 	ScreenName string `json:"screen_name"`
 	Text       string `json:"text"`
 	CreatedAt  string `json:"created_at"`
 }
 
+// main configures and starts the server
+// This example exposes 1 API method on `/GetUserTimeline` (GET),
+// eg. http://192.168.59.103:7179/GetUserTimeline?screen_name=golang
 func main() {
 	addr := os.Getenv("ADDR")
 	if addr == "" {
@@ -32,6 +37,7 @@ type server struct {
 	api *anaconda.TwitterApi
 }
 
+// newServer picks up configuration from ENV, creates TwitterApi and returns a new server
 func newServer() *server {
 	consumerKey := os.Getenv("TWITTER_CONSUMERKEY")
 	consumerSecret := os.Getenv("TWITTER_CONSUMERSECRET")
@@ -49,6 +55,7 @@ func newServer() *server {
 	return &server{api: api}
 }
 
+// ServeHTTP handles incoming queries.
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	screen_name := query.Get("screen_name")
