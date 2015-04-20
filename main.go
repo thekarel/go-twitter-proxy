@@ -1,52 +1,61 @@
+// An example Twitter API 1.1 proxy
 package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
-	"github.com/ChimeraCoder/anaconda"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
+
+	"github.com/ChimeraCoder/anaconda"
 )
 
-var (
-	consumerKey       = flag.String("ck", "", "Consumer key")
-	consumerSecret    = flag.String("cs", "", "Consumer secret")
-	accessToken       = flag.String("at", "", "Access token")
-	accessTokenSecret = flag.String("as", "", "Access token secret")
-	addr              = flag.String("addr", ":7179", "The addr the listen on")
-)
-
+// tweet is the struct for building JSON output for GetUserTimeline
 type tweet struct {
 	ScreenName string `json:"screen_name"`
 	Text       string `json:"text"`
 	CreatedAt  string `json:"created_at"`
 }
 
+// main configures and starts the server
+// This example exposes 1 API method on `/GetUserTimeline` (GET),
+// eg. http://192.168.59.103:7179/GetUserTimeline?screen_name=golang
 func main() {
-	flag.Parse()
+	addr := os.Getenv("ADDR")
+	if addr == "" {
+		addr = ":7179"
+	}
+
 	http.Handle("/GetUserTimeline", newServer())
-	log.Println("Starting server on " + *addr)
-	log.Fatal(http.ListenAndServe(*addr, nil))
+	log.Println("Starting server on " + addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
 type server struct {
 	api *anaconda.TwitterApi
 }
 
+// newServer picks up configuration from ENV, creates TwitterApi and returns a new server
 func newServer() *server {
-	if *consumerKey == "" || *consumerSecret == "" || *accessToken == "" || *accessTokenSecret == "" {
+	consumerKey := os.Getenv("TWITTER_CONSUMERKEY")
+	consumerSecret := os.Getenv("TWITTER_CONSUMERSECRET")
+	accessToken := os.Getenv("TWITTER_ACCESSTOKEN")
+	accessTokenSecret := os.Getenv("TWITTER_ACCESSTOKENSECRET")
+
+	if consumerKey == "" || consumerSecret == "" || accessToken == "" || accessTokenSecret == "" {
 		log.Fatal("You need to pass consumerKey, consumerSecret, accessToken, accessTokenSecret but some are missing. Try --help.")
 	}
 
-	anaconda.SetConsumerKey(*consumerKey)
-	anaconda.SetConsumerSecret(*consumerSecret)
-	api := anaconda.NewTwitterApi(*accessToken, *accessTokenSecret)
+	anaconda.SetConsumerKey(consumerKey)
+	anaconda.SetConsumerSecret(consumerSecret)
+	api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
 
 	return &server{api: api}
 }
 
+// ServeHTTP handles incoming queries.
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	screen_name := query.Get("screen_name")
