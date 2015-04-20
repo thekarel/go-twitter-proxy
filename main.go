@@ -2,20 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
-	"github.com/ChimeraCoder/anaconda"
 	"log"
 	"net/http"
 	"net/url"
-)
+	"os"
 
-var (
-	consumerKey       = flag.String("ck", "", "Consumer key")
-	consumerSecret    = flag.String("cs", "", "Consumer secret")
-	accessToken       = flag.String("at", "", "Access token")
-	accessTokenSecret = flag.String("as", "", "Access token secret")
-	addr              = flag.String("addr", ":7179", "The addr the listen on")
+	"github.com/ChimeraCoder/anaconda"
 )
 
 type tweet struct {
@@ -25,10 +18,14 @@ type tweet struct {
 }
 
 func main() {
-	flag.Parse()
+	addr := os.Getenv("ADDR")
+	if addr == "" {
+		addr = ":7179"
+	}
+
 	http.Handle("/GetUserTimeline", newServer())
-	log.Println("Starting server on " + *addr)
-	log.Fatal(http.ListenAndServe(*addr, nil))
+	log.Println("Starting server on " + addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
 type server struct {
@@ -36,13 +33,18 @@ type server struct {
 }
 
 func newServer() *server {
-	if *consumerKey == "" || *consumerSecret == "" || *accessToken == "" || *accessTokenSecret == "" {
+	consumerKey := os.Getenv("TWITTER_CONSUMERKEY")
+	consumerSecret := os.Getenv("TWITTER_CONSUMERSECRET")
+	accessToken := os.Getenv("TWITTER_ACCESSTOKEN")
+	accessTokenSecret := os.Getenv("TWITTER_ACCESSTOKENSECRET")
+
+	if consumerKey == "" || consumerSecret == "" || accessToken == "" || accessTokenSecret == "" {
 		log.Fatal("You need to pass consumerKey, consumerSecret, accessToken, accessTokenSecret but some are missing. Try --help.")
 	}
 
-	anaconda.SetConsumerKey(*consumerKey)
-	anaconda.SetConsumerSecret(*consumerSecret)
-	api := anaconda.NewTwitterApi(*accessToken, *accessTokenSecret)
+	anaconda.SetConsumerKey(consumerKey)
+	anaconda.SetConsumerSecret(consumerSecret)
+	api := anaconda.NewTwitterApi(accessToken, accessTokenSecret)
 
 	return &server{api: api}
 }
