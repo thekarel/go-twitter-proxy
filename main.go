@@ -75,7 +75,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tweetList := make([]tweet, 0)
+	var tweetList []tweet
 
 	for _, t := range tweets {
 		tweetList = append(tweetList, tweet{t.User.ScreenName, t.Text, t.CreatedAt})
